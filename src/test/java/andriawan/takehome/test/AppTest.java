@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import andriawan.takehome.test.entities.User;
+import andriawan.takehome.test.utilities.ATMProcessor;
 import andriawan.takehome.test.utilities.AuthManager;
 import andriawan.takehome.test.utilities.CommandProcessor;
 import andriawan.takehome.test.utilities.ConsoleManager;
@@ -16,12 +17,14 @@ public class AppTest {
 
     ConsoleManager consoleManager;
     CommandProcessor commandProcessor;
+    ATMProcessor atmProcessor;
 
     @BeforeEach
     public void setUp() {
         AuthManager authManager;
         authManager = new AuthManager();
-        commandProcessor = new CommandProcessor(authManager);
+        atmProcessor = new ATMProcessor();
+        commandProcessor = new CommandProcessor(authManager, atmProcessor);
         consoleManager = new ConsoleManager(null, commandProcessor);
     }
 

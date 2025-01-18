@@ -1,9 +1,11 @@
 package andriawan.takehome.test.utilities;
 
+import java.text.DecimalFormat;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.function.Consumer;
 
+import andriawan.takehome.test.entities.Balance;
 import andriawan.takehome.test.entities.User;
 
 public class ConsoleManager {
@@ -36,12 +38,19 @@ public class ConsoleManager {
         };
     }
 
-    public static void renderLoggedInUser(User user) {
+    public static void renderLoggedInUser(User user, Balance balance) {
         System.out.println("");
         System.out.println("=========================================");
         System.out.println("Halo ".concat(user.getName()));
+        renderBalance(balance);
         System.out.println("=========================================");
         System.out.println("");
+    }
+
+    public static void renderBalance(Balance balance) {
+        DecimalFormat df = new DecimalFormat("$ ###,###.##");
+        String format = df.format(balance.getAmount());
+        System.out.println("Your balance is ".concat(format));
     }
 
     

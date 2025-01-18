@@ -2,6 +2,9 @@ package andriawan.takehome.test.utilities;
 
 import java.util.Map;
 
+import andriawan.takehome.test.entities.Balance;
+import andriawan.takehome.test.entities.User;
+
 public class CommandProcessor {
 
     public static final int ERROR_NOT_FOUND = 1;
@@ -15,11 +18,13 @@ public class CommandProcessor {
     public static final String GUEST = "guest";
 
     private AuthManager authManager;
+    private ATMProcessor atmProcessor;
     private String state = "guest";
     private String errorMessage = "";
 
-    public CommandProcessor(AuthManager authManager) {
+    public CommandProcessor(AuthManager authManager, ATMProcessor atmProcessor) {
         this.authManager = authManager;
+        this.atmProcessor = atmProcessor;
     }
 
     public String getState() {
@@ -58,11 +63,32 @@ public class CommandProcessor {
         String available = availableCommand.get(input.toLowerCase());
         String[] listCommand = input.trim().split("\s");
         boolean isLoginCommand = input.contains("login");
+        boolean isDepositCommand = input.contains("deposit");
 
         if(input.equalsIgnoreCase("help")) {
             ConsoleManager.renderHelpCommand();
             return status;
         }
+
+        if(isDepositCommand && getState() == LOGGED_IN) {
+            User user = authManager.getAuthenticatedUser();
+            Long deposit = 0L;
+            try {
+                deposit = Long.parseLong(listCommand[1]);
+                atmProcessor.deposit(user.getName(), deposit);
+                ConsoleManager.renderBalance(atmProcessor.getBalance(user.getName()));
+            } catch (NumberFormatException e) {
+                errorMessage = "Please input valid Amount";
+                status = ERROR_NOT_VALID_INPUT;
+            } catch (ArrayIndexOutOfBoundsException a) {
+                errorMessage = "Please input valid Amount";
+                status = ERROR_NOT_VALID_INPUT;
+            }
+            return status;
+        } else if(isDepositCommand && getState() == GUEST) {
+            errorMessage = "Please Login First";
+            return ERROR_NOT_VALID_INPUT;
+        };
 
         if(isLoginCommand && getState() == LOGGED_IN) {
             errorMessage = "Already Login";
@@ -74,9 +100,10 @@ public class CommandProcessor {
             errorMessage = "Too many argument";
             return ERROR_NOT_VALID_INPUT;
         }else if(isLoginCommand && listCommand.length == 2) {
-            authManager.login(listCommand[1]);
+            User user = authManager.login(listCommand[1]);
+            Balance balance = atmProcessor.getBalance(user.getName());
             setState(CommandProcessor.LOGGED_IN);
-            ConsoleManager.renderLoggedInUser(authManager.getAuthenticatedUser());
+            ConsoleManager.renderLoggedInUser(authManager.getAuthenticatedUser(), balance);
             return status;
         }
 

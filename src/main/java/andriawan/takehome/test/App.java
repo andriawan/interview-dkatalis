@@ -2,6 +2,7 @@ package andriawan.takehome.test;
 
 import java.util.Scanner;
 
+import andriawan.takehome.test.utilities.ATMProcessor;
 import andriawan.takehome.test.utilities.AuthManager;
 import andriawan.takehome.test.utilities.CommandProcessor;
 import andriawan.takehome.test.utilities.ConsoleManager;
@@ -11,7 +12,8 @@ import andriawan.takehome.test.utilities.ConsoleManager;
  */
 public class App {
     public static void main(String[] args) {
-        CommandProcessor commandProcessor = new CommandProcessor(new AuthManager());
+        CommandProcessor commandProcessor = new CommandProcessor(
+            new AuthManager(), new ATMProcessor());
         new ConsoleManager(new Scanner(System.in), commandProcessor).startApp();   
     }
 }
