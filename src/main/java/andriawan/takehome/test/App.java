@@ -1,10 +1,14 @@
 package andriawan.takehome.test;
 
+import java.util.Scanner;
+
+import andriawan.takehome.test.utilities.ConsoleManager;
+
 /**
  * Hello world!
  */
 public class App {
     public static void main(String[] args) {
-        System.out.println("Hello World!");
+        new ConsoleManager(new Scanner(System.in)).startApp();   
     }
 }
