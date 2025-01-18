@@ -1,72 +1,73 @@
 package andriawan.takehome.test.utilities;
 
-import java.util.Map;
+import java.util.Optional;
 import java.util.Scanner;
 import java.util.function.Consumer;
+
+import andriawan.takehome.test.entities.User;
 
 public class ConsoleManager {
     
     Scanner scanner;
 
-    static Map<String, String> availableCommand = Map.of(
-        "login", "login [name] - Logs in as this customer and creates the customer if not exist",
-        "deposit", "deposit [amount] - Deposits this amount to the logged in customer",
-        "withdraw", "withdraw [amount] - Withdraws this amount from the logged in customer",
-        "transfer", "transfer [target] [amount] - Transfers this amount from the logged in customer to the target customer",
-        "help", "help - show list of command",
-        "exit", "exit - exit from application"
-    );
+    CommandProcessor commandProcessor;
 
 
-    public ConsoleManager(Scanner scanner) {
+    public ConsoleManager(Scanner scanner, CommandProcessor processor) {
         this.scanner = scanner;
+        this.commandProcessor = processor;
     }
 
     public void startApp() {
         ConsoleManager.renderWelcomeMessage();
-        watchInputFromUser(input -> handleCommand(input));
-        
+        watchInputFromUser(renderResult());
     }
 
-    public static void renderInputInstruction() {
-        System.out.println("");
-        System.out.println("=========================================");
-        System.out.println("Please input your command:");
-        System.out.println("=========================================");
-        System.out.println("");
-    }
-
-    public void handleCommand(String input) {
-        try {
-            String available = availableCommand.get(input.toLowerCase());
-            if(available == null) throw new Exception("Command Not Found. Please type help for avaliable command");
-            if(input.equalsIgnoreCase("help")) {
-                ConsoleManager.renderHelpCommand();
-            }
-            if(input.equalsIgnoreCase("exit")) {
-                ConsoleManager.renderExitMessage();
+    public Consumer<String> renderResult() {
+        return (input) -> {
+            int status = commandProcessor.handleCommand(input);
+            if(status == CommandProcessor.EXIT_APP) {
                 System.exit(0);
-            }   
-        } catch (Exception exception) {
-            System.out.println(exception.getMessage());
-            this.watchInputFromUser(
-                inputFromUser -> handleCommand(inputFromUser));
-        }
+            }
+            if(commandProcessor.getErrorMessage() != "") {
+                ConsoleManager.writeMessage("[ERROR]: ".concat(commandProcessor.getErrorMessage()));
+            }
+            this.watchInputFromUser(renderResult());
+        };
     }
+
+    public static void renderLoggedInUser(User user) {
+        System.out.println("");
+        System.out.println("=========================================");
+        System.out.println("Halo ".concat(user.getName()));
+        System.out.println("=========================================");
+        System.out.println("");
+    }
+
+    
 
     public void watchInputFromUser(Consumer<String> consumer) {
-        ConsoleManager.renderInputInstruction();
+        String username = Optional.ofNullable(commandProcessor.getAuthManager())
+            .flatMap(authManager -> Optional.ofNullable(authManager.getAuthenticatedUser()))
+            .flatMap(user -> Optional.ofNullable(user.getName()))
+            .map(name -> String.format("[%s] > ", name))
+            .orElse("");
+        System.out.print("$ ".concat(username));
         String input = this.readInput();
         consumer.accept(input);
         this.watchInputFromUser(
-            inputFromUser -> this.handleCommand(inputFromUser));
+            inputFromUser -> commandProcessor.handleCommand(inputFromUser));
+    }
+
+    public static void writeMessage(String message) {
+        System.out.println(message);
     }
 
     public static void renderWelcomeMessage() {
         System.out.println("=========================================");
         System.out.println("------ Welcome to Andriawan ATM ------");
         System.out.println("");
-        System.out.println("type /help for showing available command");
+        System.out.println("type help for showing available command");
         System.out.println("========================================");
         System.out.println("");
     }
@@ -80,7 +81,7 @@ public class ConsoleManager {
 
     public static void renderHelpCommand() {
         System.out.println("");
-        ConsoleManager.availableCommand.values().forEach(val -> {
+        CommandProcessor.availableCommand.values().forEach(val -> {
             System.out.println("  - ".concat(val));
         });
         System.out.println("");
