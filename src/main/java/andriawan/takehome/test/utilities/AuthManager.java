@@ -26,4 +26,8 @@ public class AuthManager {
     public User getAuthenticatedUser() {
         return this.authenticatedUser;
     }
+
+    public User getUser(String name) {
+        return users.get(name);
+    }
 }

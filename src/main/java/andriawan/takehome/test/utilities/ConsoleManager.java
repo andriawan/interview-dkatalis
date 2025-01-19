@@ -1,11 +1,15 @@
 package andriawan.takehome.test.utilities;
 
 import java.text.DecimalFormat;
+import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import andriawan.takehome.test.entities.Balance;
+import andriawan.takehome.test.entities.DebtHistory;
+import andriawan.takehome.test.entities.GlobalState;
 import andriawan.takehome.test.entities.User;
 
 public class ConsoleManager {
@@ -27,22 +31,25 @@ public class ConsoleManager {
 
     public Consumer<String> renderResult() {
         return (input) -> {
-            int status = commandProcessor.handleCommand(input);
-            if(status == CommandProcessor.EXIT_APP) {
+            commandProcessor.handleCommand(input);
+            GlobalState state = commandProcessor.getGlobalState();
+            if(state.getStatus() == CommandProcessor.EXIT_APP) {
                 System.exit(0);
             }
-            if(commandProcessor.getErrorMessage() != "") {
-                ConsoleManager.writeMessage("[ERROR]: ".concat(commandProcessor.getErrorMessage()));
+            if(state.getErrorMessage() != "") {
+                ConsoleManager.writeMessage("[ERROR]: ".concat(state.getErrorMessage()));
             }
             this.watchInputFromUser(renderResult());
         };
     }
 
-    public static void renderLoggedInUser(User user, Balance balance) {
+    public static void renderLoggedInUser(User user, Balance balance, List<DebtHistory> debts) {
         System.out.println("");
         System.out.println("=========================================");
         System.out.println("Halo ".concat(user.getName()));
         renderBalance(balance);
+        renderDebiturStatus(debts, user);
+        renderCrediturStatus(debts, user);
         System.out.println("=========================================");
         System.out.println("");
     }
@@ -53,6 +60,30 @@ public class ConsoleManager {
         System.out.println("Your balance is ".concat(format));
     }
 
+    public static void renderDebiturStatus(List<DebtHistory> debts, User debitur) {
+        debts.stream().filter(dataFilter -> {
+            return dataFilter.getDebiturName().equalsIgnoreCase(debitur.getName()) && 
+                dataFilter.getAmount() > 0;
+        }).collect(Collectors.toList()).forEach(debtSingle -> {
+            ConsoleManager.writeMessage(String.format(
+                "Owed %s to %s", debtSingle.getAmount(), debtSingle.getCrediturName()));
+        });
+    }
+
+    public static void renderCrediturStatus(List<DebtHistory> debts, User creditur) {
+        debts.stream().filter(dataFilter -> {
+            return dataFilter.getCrediturName().equalsIgnoreCase(creditur.getName()) && 
+                dataFilter.getAmount() > 0;
+        }).collect(Collectors.toList()).forEach(debtSingle -> {
+            ConsoleManager.writeMessage(String.format(
+                "Owed %s from %s", debtSingle.getAmount(), debtSingle.getDebiturName()));
+        });
+    }
+
+    public static String formatBalance(Long amount) {
+        DecimalFormat df = new DecimalFormat("$###,###.##");
+        return df.format(amount);
+    }
     
 
     public void watchInputFromUser(Consumer<String> consumer) {
