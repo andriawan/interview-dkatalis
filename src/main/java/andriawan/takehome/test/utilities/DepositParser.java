@@ -38,11 +38,15 @@ public class DepositParser extends BaseParser {
             if(longBalance > mapper.getAmount()) {
                 ConsoleManager.writeMessage(String.format("Transfer %s to %s", 
                     mapper.getAmount(), mapper.getCrediturName()));
+                atmProcessor.transfer(debitur.getName(), 
+                    mapper.getCrediturName(), mapper.getAmount());
                 remainingBalance = longBalance - mapper.getAmount();
                 finalAmount = 0L; 
             }else {
                 ConsoleManager.writeMessage(String.format("Transfer %s to %s", 
                     longBalance, mapper.getCrediturName()));
+                atmProcessor.transfer(debitur.getName(), 
+                    mapper.getCrediturName(), longBalance);
                 finalAmount = mapper.getAmount() - longBalance;
                 remainingBalance = 0L;
             }
@@ -71,6 +75,8 @@ public class DepositParser extends BaseParser {
                 Long deposit = 0L;
                 deposit = Long.parseLong(command[1]);
                 atmProcessor.deposit(user.getName(), deposit);
+                ConsoleManager.writeMessage("Successfully deposit ".concat(
+                    ConsoleManager.formatBalance(deposit)));
                 this.payDebt(user);
                 ConsoleManager.renderBalance(atmProcessor.getBalance(user.getName()));
                 ConsoleManager.renderCrediturStatus(atmProcessor.getListDebt(), user);

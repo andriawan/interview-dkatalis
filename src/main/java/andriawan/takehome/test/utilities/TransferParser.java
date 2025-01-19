@@ -88,6 +88,9 @@ public class TransferParser extends BaseParser {
 
                 Long transferAmount = 0L;
                 transferAmount = Long.parseLong(command[2]);
+                ConsoleManager.writeMessage(String.format("Transfering %s to %s...", 
+                    ConsoleManager.formatBalance(transferAmount), command[1]));
+                ConsoleManager.writeMessage("checking owe form other users...");
                 transferAmount = checkCreditBalance(user, transferAmount, receiver);
                 transferAmount = checkInsufficientBalance(user, transferAmount, receiver);
 

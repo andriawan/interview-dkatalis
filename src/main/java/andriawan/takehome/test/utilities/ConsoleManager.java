@@ -46,8 +46,8 @@ public class ConsoleManager {
     public static void renderLoggedInUser(User user, Balance balance, List<DebtHistory> debts) {
         System.out.println("");
         System.out.println("=========================================");
-        System.out.println("Halo ".concat(user.getName()));
-        renderBalance(balance);
+        System.out.println(String.format("Halo %s, Your balance is %s", 
+            user.getName(), formatBalance(balance.getAmount().longValue())));
         renderDebiturStatus(debts, user);
         renderCrediturStatus(debts, user);
         System.out.println("=========================================");
@@ -55,7 +55,7 @@ public class ConsoleManager {
     }
 
     public static void renderBalance(Balance balance) {
-        DecimalFormat df = new DecimalFormat("$ ###,###.##");
+        DecimalFormat df = new DecimalFormat("$###,###.##");
         String format = df.format(balance.getAmount());
         System.out.println("Your balance is ".concat(format));
     }
@@ -66,7 +66,8 @@ public class ConsoleManager {
                 dataFilter.getAmount() > 0;
         }).collect(Collectors.toList()).forEach(debtSingle -> {
             ConsoleManager.writeMessage(String.format(
-                "Owed %s to %s", debtSingle.getAmount(), debtSingle.getCrediturName()));
+                "Owed %s to %s", ConsoleManager.formatBalance(debtSingle.getAmount()), 
+                    debtSingle.getCrediturName()));
         });
     }
 
@@ -76,7 +77,8 @@ public class ConsoleManager {
                 dataFilter.getAmount() > 0;
         }).collect(Collectors.toList()).forEach(debtSingle -> {
             ConsoleManager.writeMessage(String.format(
-                "Owed %s from %s", debtSingle.getAmount(), debtSingle.getDebiturName()));
+                "Owed %s from %s", ConsoleManager.formatBalance(debtSingle.getAmount()), 
+                    debtSingle.getDebiturName()));
         });
     }
 

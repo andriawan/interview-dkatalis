@@ -105,6 +105,16 @@ public class AppTest {
     }
 
     @Test
+    public void userShouldWithdrawSucessfully() {
+        commandProcessor.handleCommand("login andriawan");
+        commandProcessor.handleCommand("deposit 100");
+        commandProcessor.handleCommand("withdraw 10");
+        User user = commandProcessor.getAuthManager().getAuthenticatedUser();
+        Balance balance = atmProcessor.getBalance(user.getName());
+        assertEquals(balance.getAmount(), new BigDecimal(90));
+    }
+
+    @Test
     public void userShouldTransferSucessfully() {
         commandProcessor.handleCommand("login andriawan");
         commandProcessor.handleCommand("deposit 100");
@@ -121,40 +131,72 @@ public class AppTest {
         assertEquals(balanceUser2.getAmount(), new BigDecimal(10));
     }
 
+    private String setLoginAsUser(String name) {
+        return String.format("login %s", name);
+    }
+
+    private String deposit(Long amount) {
+        return String.format("deposit %d", amount);
+    }
+
+    private String transfer(String receiver, Long amount) {
+        return String.format("transfer %s %d", receiver, amount);
+    }
+
     @Test
     public void userShouldTransferSucessfullyWithOwe() {
-        commandProcessor.handleCommand("login andriawan");
-        commandProcessor.handleCommand("deposit 100");
+        String userDebitur = "andriawan";
+        String userCreditur = "irwan";
+        commandProcessor.handleCommand(setLoginAsUser(userDebitur));
+        commandProcessor.handleCommand(deposit(100L));
         commandProcessor.handleCommand("logout");
-        commandProcessor.handleCommand("login user2");
-        commandProcessor.handleCommand("deposit 10");
-        commandProcessor.handleCommand("logout user2");
-        commandProcessor.handleCommand("login andriawan");
-        commandProcessor.handleCommand("transfer user2 200");
+        commandProcessor.handleCommand(setLoginAsUser(userCreditur));
+        commandProcessor.handleCommand(deposit(10L));
         commandProcessor.handleCommand("logout");
-        commandProcessor.handleCommand("login user2");
+        commandProcessor.handleCommand(setLoginAsUser(userDebitur));
+        commandProcessor.handleCommand(transfer(userCreditur, 200L));
         commandProcessor.handleCommand("logout");
-        commandProcessor.handleCommand("login andriawan");
-        commandProcessor.handleCommand("deposit 40");
+        commandProcessor.handleCommand(setLoginAsUser(userCreditur));
         commandProcessor.handleCommand("logout");
-        commandProcessor.handleCommand("login user2");
-        commandProcessor.handleCommand("deposit 50");
-        commandProcessor.handleCommand("transfer andriawan 40");
+        commandProcessor.handleCommand(setLoginAsUser(userDebitur));
+        commandProcessor.handleCommand(deposit(40L));
+        commandProcessor.handleCommand("logout");
+        commandProcessor.handleCommand(setLoginAsUser(userCreditur));
+        commandProcessor.handleCommand(deposit(50L));
+        commandProcessor.handleCommand(transfer(userDebitur, 40L));
+        Long debiturOwe = this.atmProcessor.getListDebt().stream().filter(
+                dataFilter -> dataFilter.getDebiturName().equals(userDebitur))
+            .mapToLong(mapper -> mapper.getAmount())
+            .sum();
+        assertEquals(debiturOwe, 20);
     }
 
     @Test
     public void userShouldTransferSucessfullyWithOwed() {
-        commandProcessor.handleCommand("login andriawan");
-        commandProcessor.handleCommand("deposit 20");
+        String userDebitur = "andriawan";
+        String userCreditur = "irwan";
+        commandProcessor.handleCommand(setLoginAsUser(userDebitur));
+        commandProcessor.handleCommand(deposit(20L));
         commandProcessor.handleCommand("logout");
-        commandProcessor.handleCommand("login daras");
-        commandProcessor.handleCommand("deposit 20");
-        commandProcessor.handleCommand("transfer andriawan 10");
+        commandProcessor.handleCommand(setLoginAsUser(userCreditur));
+        commandProcessor.handleCommand(deposit(10L));
         commandProcessor.handleCommand("logout");
-        commandProcessor.handleCommand("login andriawan");
-        commandProcessor.handleCommand("transfer daras 10");
-        commandProcessor.handleCommand("transfer daras 30");
-
+        commandProcessor.handleCommand(setLoginAsUser(userDebitur));
+        commandProcessor.handleCommand(transfer(userCreditur, 200L));
+        commandProcessor.handleCommand("logout");
+        commandProcessor.handleCommand(setLoginAsUser(userCreditur));
+        commandProcessor.handleCommand("logout");
+        commandProcessor.handleCommand(setLoginAsUser(userDebitur));
+        commandProcessor.handleCommand(deposit(40L));
+        commandProcessor.handleCommand("logout");
+        commandProcessor.handleCommand(setLoginAsUser(userCreditur));
+        commandProcessor.handleCommand(deposit(50L));
+        commandProcessor.handleCommand(transfer(userDebitur, 40L));
+        Long crediturOwed = this.atmProcessor.getListDebt().stream().filter(
+                dataFilter -> dataFilter.getCrediturName().equals(userCreditur))
+            .mapToLong(mapper -> mapper.getAmount())
+            .sum();
+        assertEquals(crediturOwed, 100);
 
     }
 }
